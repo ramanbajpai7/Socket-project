@@ -2,14 +2,19 @@ const express = require("express");
 const mongoose = require("mongoose");
 const http = require("http");
 const WebSocket = require("ws");
-
+const path = require("path"); // Import path module
+require("dotenv").config();
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; // Consistently using PORT
 const taskRoutes = require("./route/taskRoute");
+const Task = require("./models/task"); // Import Task model
 
 app.use(express.json());
 
 app.use("/api", taskRoutes);
+
+// Serve static files for your frontend build
+app.use(express.static(path.resolve(__dirname, "build")));
 
 const server = http.createServer(app);
 
@@ -31,15 +36,12 @@ wss.on("connection", (ws) => {
   });
 });
 
-mongoose;
+// Connect to MongoDB
 mongoose
-  .connect(
-    "mongodb+srv://ramanbajpai9795:OQLgRHML6IBYB62x@cluster0.n5t3z.mongodb.net/taskmanager?retryWrites=true&w=majority&appName=Cluster0",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(process.env.MONGODB_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log("Connected to MongoDB");
     server.listen(PORT, () => {
@@ -50,6 +52,7 @@ mongoose
     console.log("Database connection failed", err);
   });
 
+// Broadcast function for task updates
 const taskUpdated = (updatedTask) => {
   broadcast({
     event: "taskUpdated",
@@ -57,6 +60,7 @@ const taskUpdated = (updatedTask) => {
   });
 };
 
+// PUT route to update a task
 app.put("/api/tasks/:id", async (req, res) => {
   const { id } = req.params;
   const updatedTask = req.body;
